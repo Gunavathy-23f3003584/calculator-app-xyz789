@@ -92,22 +92,28 @@
         <input type="text" id="display" value="0" readonly>
         <div class="calculator-buttons">
             <button class="btn btn-clear" onclick="clearDisplay()">AC</button>
+            <button class="btn btn-operator" onclick="handlePercentage()">%</button>
             <button class="btn btn-operator" onclick="appendOperator('/')">/</button>
             <button class="btn btn-operator" onclick="appendOperator('*')">*</button>
+
             <button class="btn btn-number" onclick="appendNumber('7')">7</button>
             <button class="btn btn-number" onclick="appendNumber('8')">8</button>
             <button class="btn btn-number" onclick="appendNumber('9')">9</button>
             <button class="btn btn-operator" onclick="appendOperator('-')">-</button>
+
             <button class="btn btn-number" onclick="appendNumber('4')">4</button>
             <button class="btn btn-number" onclick="appendNumber('5')">5</button>
             <button class="btn btn-number" onclick="appendNumber('6')">6</button>
             <button class="btn btn-operator" onclick="appendOperator('+')">+</button>
+
             <button class="btn btn-number" onclick="appendNumber('1')">1</button>
             <button class="btn btn-number" onclick="appendNumber('2')">2</button>
             <button class="btn btn-number" onclick="appendNumber('3')">3</button>
             <button class="btn btn-equals" onclick="calculateResult()">=</button>
+
             <button class="btn btn-number btn-zero" onclick="appendNumber('0')">0</button>
             <button class="btn btn-number" onclick="appendNumber('.')">.</button>
+            <button class="btn btn-operator" onclick="handleSquareRoot()">√</button>
         </div>
     </div>
 
@@ -119,6 +125,10 @@
         let waitingForNewNumber = false;
 
         function updateDisplay() {
+            if (currentInput === 'Error') {
+                display.value = 'Error';
+                return;
+            }
             // Limit display length to avoid overflow, adjust as needed
             if (currentInput.length > 12) {
                 display.value = parseFloat(currentInput).toPrecision(8); // Or handle scientific notation
@@ -145,8 +155,10 @@
                 waitingForNewNumber = false;
             } else {
                 if (number === '.' && currentInput.includes('.')) {
-                    return;
+                    return; // Prevent multiple decimal points
                 }
+                // If current input is '0' and a non-dot number is pressed, replace '0'
+                // Otherwise, append
                 currentInput = (currentInput === '0' && number !== '.') ? number : currentInput + number;
             }
             updateDisplay();
@@ -159,9 +171,12 @@
 
             const inputValue = parseFloat(currentInput);
 
-            if (previousNumber === null) {
+            if (previousNumber === null || waitingForNewNumber) {
+                // If this is the first number, or an operator is pressed after another operator
+                // (meaning the currentInput is a result or the first operand of a new chain)
                 previousNumber = inputValue;
             } else if (operator) {
+                // If there's a pending operation, calculate it first
                 const result = performCalculation(previousNumber, inputValue, operator);
                 if (result === 'Error') {
                     currentInput = 'Error';
@@ -175,13 +190,18 @@
                 previousNumber = result;
             }
 
-            waitingForNewNumber = true;
+            waitingForNewNumber = true; // Next number input should clear currentInput
             operator = nextOperator;
             updateDisplay();
         }
 
         function calculateResult() {
-            if (currentInput === 'Error' || previousNumber === null || operator === null) {
+            if (currentInput === 'Error') {
+                return;
+            }
+            if (previousNumber === null || operator === null) {
+                // If no pending operation, '=' acts like displaying current number
+                // Or if previousNumber is null, it means no operator was pressed yet
                 return;
             }
 
@@ -195,9 +215,9 @@
             }
 
             updateDisplay();
-            previousNumber = null;
-            operator = null;
-            waitingForNewNumber = true;
+            previousNumber = null; // Clear previous number
+            operator = null; // Clear operator
+            waitingForNewNumber = true; // Next number should start fresh
         }
 
         function performCalculation(num1, num2, op) {
@@ -210,14 +230,60 @@
                     return num1 * num2;
                 case '/':
                     if (num2 === 0) {
-                        return 'Error';
+                        return 'Error'; // Division by zero
                     }
                     return num1 / num2;
                 default:
-                    return num2;
+                    return num2; // Should not happen with current logic
             }
         }
 
+        function handleSquareRoot() {
+            if (currentInput === 'Error') {
+                clearDisplay();
+                return;
+            }
+            const num = parseFloat(currentInput);
+            if (isNaN(num) || num < 0) {
+                currentInput = 'Error';
+            } else {
+                currentInput = String(Math.sqrt(num));
+            }
+            waitingForNewNumber = true; // After sqrt, next number should clear display
+            updateDisplay();
+        }
+
+        function handlePercentage() {
+            if (currentInput === 'Error') {
+                clearDisplay();
+                return;
+            }
+            let num = parseFloat(currentInput);
+            if (isNaN(num)) {
+                currentInput = 'Error';
+                updateDisplay();
+                return;
+            }
+
+            if (previousNumber !== null && operator !== null && !waitingForNewNumber) {
+                // This is the second operand (e.g., 50 + 10%)
+                let prevNum = parseFloat(previousNumber);
+                if (operator === '+' || operator === '-') {
+                    num = prevNum * (num / 100);
+                } else if (operator === '*' || operator === '/') {
+                    num = num / 100;
+                }
+            } else {
+                // No pending operation, or first operand (e.g., 50%)
+                num = num / 100;
+            }
+
+            currentInput = String(num);
+            waitingForNewNumber = true; // After percentage, next number should clear display
+            updateDisplay();
+        }
+
+        // Initialize display
         updateDisplay();
     </script>
 </body>
