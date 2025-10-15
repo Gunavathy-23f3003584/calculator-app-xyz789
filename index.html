@@ -116,26 +116,29 @@
         <input type="text" id="display" value="0" readonly>
         <div class="buttons">
             <button class="button clear" id="clear" style="grid-column: span 2;">C</button>
-            <button class="button operator" data-operator="/">/</button>
-            <button class="button operator" data-operator="*">*</button>
+            <button class="button operator" data-operator="sqrt">√</button>
+            <button class="button operator" data-operator="%">%</button>
 
             <button class="button number" data-number="7">7</button>
             <button class="button number" data-number="8">8</button>
             <button class="button number" data-number="9">9</button>
-            <button class="button operator" data-operator="-">-</button>
+            <button class="button operator" data-operator="/">/</button>
 
             <button class="button number" data-number="4">4</button>
             <button class="button number" data-number="5">5</button>
             <button class="button number" data-number="6">6</button>
-            <button class="button operator" data-operator="+">+</button>
+            <button class="button operator" data-operator="*">*</button>
 
             <button class="button number" data-number="1">1</button>
             <button class="button number" data-number="2">2</button>
             <button class="button number" data-number="3">3</button>
-            <button class="button number" data-number=".">.</button>
+            <button class="button operator" data-operator="-">-</button>
             
             <button class="button number" data-number="0" style="grid-column: span 2;">0</button>
-            <button class="button equals" id="equals" style="grid-column: span 2;">=</button>
+            <button class="button number" data-number=".">.</button>
+            <button class="button operator" data-operator="+">+</button>
+
+            <button class="button equals" id="equals" style="grid-column: span 4;">=</button>
         </div>
     </div>
 
@@ -144,15 +147,30 @@
         const clearButton = document.getElementById('clear');
         const equalsButton = document.getElementById('equals');
         const numberButtons = document.querySelectorAll('.button.number');
-        const operatorButtons = document.querySelectorAll('.button.operator');
+        
+        // Select only binary operators for 'chooseOperator'
+        const binaryOperatorButtons = document.querySelectorAll('.button.operator[data-operator="+"], .button.operator[data-operator="-"], .button.operator[data-operator="*"], .button.operator[data-operator="/"]');
+        
+        // Select specific unary/special operators
+        const sqrtButton = document.querySelector('.button.operator[data-operator="sqrt"]');
+        const percentButton = document.querySelector('.button.operator[data-operator="%"]');
 
         let currentInput = '';
         let previousInput = '';
-        let operator = null;
+        let operator = null; // Stores binary operator (+, -, *, /)
         let shouldResetDisplay = false; 
 
         function updateDisplay() {
-            display.value = currentInput === '' ? '0' : currentInput;
+            // Prevent display overflow for very long numbers by using scientific notation
+            const maxDisplayLength = 12; 
+            if (currentInput.length > maxDisplayLength && currentInput.includes('.')) {
+                display.value = parseFloat(currentInput).toPrecision(maxDisplayLength - 5);
+            } else if (currentInput.length > maxDisplayLength) {
+                 display.value = parseFloat(currentInput).toExponential(maxDisplayLength - 5);
+            }
+            else {
+                display.value = currentInput === '' ? '0' : currentInput;
+            }
         }
 
         function appendNumber(number) {
@@ -161,6 +179,7 @@
                 shouldResetDisplay = false;
             }
             if (number === '.' && currentInput.includes('.')) return;
+            // Prevent multiple leading zeros unless it's "0."
             if (currentInput === '0' && number !== '.') {
                 currentInput = number;
             } else {
@@ -169,15 +188,15 @@
             updateDisplay();
         }
 
-        function chooseOperator(op) {
+        function chooseOperator(op) { // This function is for binary operators only
             if (currentInput === '' && previousInput === '') return;
             if (currentInput === '' && previousInput !== '') {
-                operator = op;
+                operator = op; // Change operator if no current input, e.g., 5 + *
                 return;
             }
 
             if (previousInput !== '') {
-                calculate();
+                calculate(); // Calculate pending operation before setting new one
             }
             operator = op;
             previousInput = currentInput;
@@ -227,6 +246,74 @@
             updateDisplay();
         }
 
+        function handleSquareRoot() {
+            if (currentInput === '') return;
+
+            let num = parseFloat(currentInput);
+            if (isNaN(num)) {
+                display.value = 'Error';
+                clearAll();
+                return;
+            }
+            if (num < 0) {
+                display.value = 'Error: Neg Sqrt';
+                clearAll();
+                return;
+            }
+
+            currentInput = Math.sqrt(num).toString();
+            shouldResetDisplay = true;
+            updateDisplay();
+        }
+
+        function handlePercentage() {
+            if (currentInput === '') return;
+
+            let num = parseFloat(currentInput);
+            if (isNaN(num)) {
+                display.value = 'Error';
+                clearAll();
+                return;
+            }
+
+            if (previousInput === '' || operator === null) {
+                // Simple percentage: 50% -> 0.5
+                currentInput = (num / 100).toString();
+            } else {
+                // Percentage of previous input: 100 + 10% -> 100 + (100 * 0.10)
+                let prev = parseFloat(previousInput);
+                let percentageValue = prev * (num / 100);
+
+                switch (operator) {
+                    case '+':
+                        currentInput = (prev + percentageValue).toString();
+                        break;
+                    case '-':
+                        currentInput = (prev - percentageValue).toString();
+                        break;
+                    case '*':
+                        currentInput = (prev * (num / 100)).toString(); // 100 * 10% = 100 * 0.1 = 10
+                        break;
+                    case '/':
+                        if ((num / 100) === 0) { // Avoid division by zero from percentage
+                            display.value = 'Error: Div by 0';
+                            clearAll();
+                            return;
+                        }
+                        currentInput = (prev / (num / 100)).toString(); // 100 / 10% = 100 / 0.1 = 1000
+                        break;
+                    default:
+                        // If operator is not one of these, default to simple percentage of current input
+                        currentInput = (num / 100).toString();
+                        break;
+                }
+                previousInput = ''; // Clear pending operation after percentage calculation
+                operator = null;
+            }
+            shouldResetDisplay = true;
+            updateDisplay();
+        }
+
         function clearAll() {
             currentInput = '';
             previousInput = '';
@@ -235,13 +322,21 @@
             display.value = '0';
         }
 
+        // --- Event Listeners ---
         numberButtons.forEach(button => {
             button.addEventListener('click', () => appendNumber(button.dataset.number));
         });
 
-        operatorButtons.forEach(button => {
+        binaryOperatorButtons.forEach(button => {
             button.addEventListener('click', () => chooseOperator(button.dataset.operator));
         });
+
+        if (sqrtButton) {
+            sqrtButton.addEventListener('click', handleSquareRoot);
+        }
+        if (percentButton) {
+            percentButton.addEventListener('click', handlePercentage);
+        }
 
         equalsButton.addEventListener('click', () => {
             calculate();
@@ -249,6 +344,7 @@
 
         clearButton.addEventListener('click', clearAll);
 
+        // Initialize display
         updateDisplay();
     </script>
 </body>
