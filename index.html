@@ -4,401 +4,220 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Simple Calculator</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
     <style>
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             display: flex;
             justify-content: center;
             align-items: center;
             min-height: 100vh;
+            background-color: #f8f9fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             margin: 0;
-            background-color: #f0f2f5;
-            color: #333;
         }
-
         .calculator {
-            background-color: #ffffff;
-            border-radius: 12px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            background-color: #343a40;
+            border-radius: 10px;
             padding: 20px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
             width: 320px;
-            box-sizing: border-box;
         }
-
         #display {
-            background-color: #222;
-            color: #e0e0e0;
+            width: 100%;
+            height: 70px;
+            background-color: #212529;
+            color: #ffffff;
             font-size: 2.8em;
-            padding: 20px 15px;
-            border-radius: 8px;
-            margin-bottom: 20px;
             text-align: right;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            box-sizing: border-box;
             overflow: hidden;
             white-space: nowrap;
-            text-overflow: ellipsis;
-            min-height: 60px;
-            display: flex;
-            align-items: center;
-            justify-content: flex-end;
+            pointer-events: none; /* Prevent selection/cursor */
         }
-
-        .buttons-grid {
+        .calculator-buttons {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
-            gap: 12px;
+            gap: 10px;
         }
-
-        button {
-            width: 100%;
-            padding: 20px;
-            font-size: 1.5em;
+        .btn {
+            font-size: 1.8em;
+            padding: 15px 0;
+            border-radius: 5px;
             border: none;
-            border-radius: 8px;
             cursor: pointer;
-            background-color: #e0e0e0;
-            color: #333;
             transition: background-color 0.2s, transform 0.1s;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08);
+            color: #ffffff;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
         }
-
-        button:hover {
-            background-color: #d0d0d0;
-            transform: translateY(-1px);
+        .btn:active {
+            transform: translateY(1px);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
         }
-
-        button:active {
-            transform: translateY(0);
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        .btn-number {
+            background-color: #6c757d;
         }
-
-        button.operator {
-            background-color: #ff9500;
-            color: #fff;
+        .btn-number:hover {
+            background-color: #5a6268;
         }
-
-        button.operator:hover {
-            background-color: #e08000;
+        .btn-operator {
+            background-color: #ffc107;
+            color: #212529;
         }
-
-        button.equals {
-            background-color: #007aff;
-            color: #fff;
-            grid-column: span 2; /* Span two columns for the equals button */
+        .btn-operator:hover {
+            background-color: #e0a800;
         }
-
-        button.equals:hover {
-            background-color: #0060c0;
+        .btn-equals {
+            background-color: #007bff;
         }
-
-        button.clear, button.delete {
-            background-color: #ff3b30;
-            color: #fff;
+        .btn-equals:hover {
+            background-color: #0069d9;
         }
-
-        button.clear:hover, button.delete:hover {
-            background-color: #e02a20;
+        .btn-clear {
+            background-color: #dc3545;
+        }
+        .btn-clear:hover {
+            background-color: #c82333;
+        }
+        .btn-zero {
+            grid-column: span 2;
         }
     </style>
 </head>
 <body>
     <div class="calculator">
-        <div id="display">0</div>
-        <div class="buttons-grid">
-            <!-- Modified layout for new operations -->
-            <button class="clear" id="clear">C</button>
-            <button class="operator" data-operator="sqrt">√</button>
-            <button class="operator" data-operator="%">%</button>
-            <button class="operator" data-operator="/">/</button>
-
-            <button class="number" data-number="7">7</button>
-            <button class="number" data-number="8">8</button>
-            <button class="number" data-number="9">9</button>
-            <button class="operator" data-operator="*">*</button>
-
-            <button class="number" data-number="4">4</button>
-            <button class="number" data-number="5">5</button>
-            <button class="number" data-number="6">6</button>
-            <button class="operator" data-operator="-">-</button>
-
-            <button class="number" data-number="1">1</button>
-            <button class="number" data-number="2">2</button>
-            <button class="number" data-number="3">3</button>
-            <button class="operator" data-operator="+">+</button>
-
-            <!-- Moved DEL, 0, . to the last row, keeping equals spanning 2 -->
-            <button class="delete" id="delete">DEL</button>
-            <button class="number" data-number="0">0</button>
-            <button class="number" id="decimal" data-number=".">.</button>
-            <button class="equals" id="equals">=</button>
+        <input type="text" id="display" value="0" readonly>
+        <div class="calculator-buttons">
+            <button class="btn btn-clear" onclick="clearDisplay()">AC</button>
+            <button class="btn btn-operator" onclick="appendOperator('/')">/</button>
+            <button class="btn btn-operator" onclick="appendOperator('*')">*</button>
+            <button class="btn btn-number" onclick="appendNumber('7')">7</button>
+            <button class="btn btn-number" onclick="appendNumber('8')">8</button>
+            <button class="btn btn-number" onclick="appendNumber('9')">9</button>
+            <button class="btn btn-operator" onclick="appendOperator('-')">-</button>
+            <button class="btn btn-number" onclick="appendNumber('4')">4</button>
+            <button class="btn btn-number" onclick="appendNumber('5')">5</button>
+            <button class="btn btn-number" onclick="appendNumber('6')">6</button>
+            <button class="btn btn-operator" onclick="appendOperator('+')">+</button>
+            <button class="btn btn-number" onclick="appendNumber('1')">1</button>
+            <button class="btn btn-number" onclick="appendNumber('2')">2</button>
+            <button class="btn btn-number" onclick="appendNumber('3')">3</button>
+            <button class="btn btn-equals" onclick="calculateResult()">=</button>
+            <button class="btn btn-number btn-zero" onclick="appendNumber('0')">0</button>
+            <button class="btn btn-number" onclick="appendNumber('.')">.</button>
         </div>
     </div>
 
     <script>
-        /*
-        MIT License
-
-        Copyright (c) 2023 Your Name/Company
-
-        Permission is hereby granted, free of charge, to any person obtaining a copy
-        of this software and associated documentation files (the "Software"), to deal
-        in the Software without restriction, including without limitation the rights
-        to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-        copies of the Software, and to permit persons to whom the Software is
-        furnished to do so, subject to the following conditions:
-
-        The above copyright notice and this permission notice shall be included in all
-        copies or substantial portions of the Software.
-
-        THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-        IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-        FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-        AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-        LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-        OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-        SOFTWARE.
-        */
-
-        /*
-        README.md content:
-
-        # Simple Calculator
-
-        A minimal, single-page web application implementing a basic calculator with standard arithmetic operations, square root, and percentage functions.
-
-        ## Features
-        - Addition, Subtraction, Multiplication, Division
-        - Square Root (√)
-        - Percentage (%)
-        - Clear (C) to reset the calculator
-        - Delete (DEL) to remove the last character
-        - Responsive design with a clean, intuitive UI.
-        - Error handling for division by zero and invalid square root inputs.
-
-        ## How to Use
-        Open `index.html` in your web browser to start using the calculator.
-        Click on number buttons to input values.
-        Click on operator buttons (+, -, *, /) for arithmetic operations.
-        Use '√' for square root of the current number.
-        Use '%' for percentage calculations.
-        Click '=' to get the result.
-        'C' clears all input.
-        'DEL' deletes the last character.
-
-        ## Development
-        This application is built with pure HTML, CSS, and JavaScript. It is designed as a single-page application for easy deployment to platforms like GitHub Pages.
-
-        ## License
-        This project is licensed under the MIT License.
-        */
-
-
         const display = document.getElementById('display');
-        const numberButtons = document.querySelectorAll('.number');
-        const operatorButtons = document.querySelectorAll('.operator');
-        const equalsButton = document.getElementById('equals');
-        const clearButton = document.getElementById('clear');
-        const deleteButton = document.getElementById('delete');
-
         let currentInput = '0';
-        let previousInput = '';
+        let previousNumber = null;
         let operator = null;
-        let shouldResetDisplay = false; // Flag to indicate if the display should be reset for a new number
+        let waitingForNewNumber = false;
 
         function updateDisplay() {
-            display.innerText = currentInput;
-            // Adjust font size for longer numbers
-            if (currentInput.length > 10 && currentInput.length <= 16) {
-                display.style.fontSize = '2em';
-            } else if (currentInput.length > 16) {
-                display.style.fontSize = '1.5em';
+            // Limit display length to avoid overflow, adjust as needed
+            if (currentInput.length > 12) {
+                display.value = parseFloat(currentInput).toPrecision(8); // Or handle scientific notation
+            } else {
+                display.value = currentInput;
             }
-            else {
-                display.style.fontSize = '2.8em';
-            }
+        }
+
+        function clearDisplay() {
+            currentInput = '0';
+            previousNumber = null;
+            operator = null;
+            waitingForNewNumber = false;
+            updateDisplay();
         }
 
         function appendNumber(number) {
-            if (currentInput === 'Error: Div by 0' || currentInput === 'Error: Invalid input') {
-                currentInput = '0'; // Clear error message before appending
+            if (currentInput === 'Error') {
+                clearDisplay(); // Clear error state before new input
             }
 
-            if (shouldResetDisplay) {
+            if (waitingForNewNumber) {
                 currentInput = number;
-                shouldResetDisplay = false;
-            } else if (currentInput === '0' && number !== '.') {
-                currentInput = number;
-            } else if (number === '.' && currentInput.includes('.')) {
-                return; // Prevent multiple decimals
+                waitingForNewNumber = false;
             } else {
-                currentInput += number;
+                if (number === '.' && currentInput.includes('.')) {
+                    return;
+                }
+                currentInput = (currentInput === '0' && number !== '.') ? number : currentInput + number;
             }
             updateDisplay();
         }
 
-        function chooseOperation(op) {
-            if (currentInput === '' || currentInput === 'Error: Div by 0' || currentInput === 'Error: Invalid input') return;
-            if (previousInput !== '') {
-                calculate(); // Calculate previous operation if an operator is pressed consecutively
+        function appendOperator(nextOperator) {
+            if (currentInput === 'Error') {
+                return; // Do not process operators if in error state
             }
-            operator = op;
-            previousInput = currentInput;
-            currentInput = ''; // Clear current input for the next number
-            shouldResetDisplay = true; // Next number input should start fresh
+
+            const inputValue = parseFloat(currentInput);
+
+            if (previousNumber === null) {
+                previousNumber = inputValue;
+            } else if (operator) {
+                const result = performCalculation(previousNumber, inputValue, operator);
+                if (result === 'Error') {
+                    currentInput = 'Error';
+                    updateDisplay();
+                    previousNumber = null;
+                    operator = null;
+                    waitingForNewNumber = true;
+                    return;
+                }
+                currentInput = String(result);
+                previousNumber = result;
+            }
+
+            waitingForNewNumber = true;
+            operator = nextOperator;
+            updateDisplay();
         }
 
-        function calculate() {
-            let result;
-            const prev = parseFloat(previousInput);
-            const current = parseFloat(currentInput);
+        function calculateResult() {
+            if (currentInput === 'Error' || previousNumber === null || operator === null) {
+                return;
+            }
 
-            if (isNaN(prev) || isNaN(current)) return; // Don't calculate if inputs are invalid
+            const inputValue = parseFloat(currentInput);
+            const result = performCalculation(previousNumber, inputValue, operator);
 
-            switch (operator) {
+            if (result === 'Error') {
+                currentInput = 'Error';
+            } else {
+                currentInput = String(result);
+            }
+
+            updateDisplay();
+            previousNumber = null;
+            operator = null;
+            waitingForNewNumber = true;
+        }
+
+        function performCalculation(num1, num2, op) {
+            switch (op) {
                 case '+':
-                    result = prev + current;
-                    break;
+                    return num1 + num2;
                 case '-':
-                    result = prev - current;
-                    break;
+                    return num1 - num2;
                 case '*':
-                    result = prev * current;
-                    break;
+                    return num1 * num2;
                 case '/':
-                    if (current === 0) {
-                        currentInput = 'Error: Div by 0';
-                        previousInput = '';
-                        operator = null;
-                        shouldResetDisplay = true;
-                        updateDisplay();
-                        return;
+                    if (num2 === 0) {
+                        return 'Error';
                     }
-                    result = prev / current;
-                    break;
+                    return num1 / num2;
                 default:
-                    return; // No operator chosen or a unary operator was used
+                    return num2;
             }
-            currentInput = roundResult(result).toString();
-            operator = null;
-            previousInput = '';
-            shouldResetDisplay = true; // Result should be cleared if a new number is typed
-            updateDisplay();
         }
 
-        function roundResult(num) {
-            // Limits floating point precision issues for display
-            return parseFloat(num.toFixed(10));
-        }
-
-        function clearCalculator() {
-            currentInput = '0';
-            previousInput = '';
-            operator = null;
-            shouldResetDisplay = false;
-            updateDisplay();
-            display.style.fontSize = '2.8em'; // Reset font size
-        }
-
-        function deleteLastCharacter() {
-            if (currentInput === 'Error: Div by 0' || currentInput === 'Error: Invalid input') {
-                currentInput = '0';
-                shouldResetDisplay = false;
-            } else if (shouldResetDisplay) {
-                // If display should be reset (e.g., after calculation), DEL clears the result
-                currentInput = '0';
-                shouldResetDisplay = false;
-            } else if (currentInput.length === 1 || (currentInput.length === 2 && currentInput.startsWith('-'))) { // Handles single digit and negative single digit like -5
-                currentInput = '0';
-            } else {
-                currentInput = currentInput.slice(0, -1);
-            }
-            updateDisplay();
-        }
-
-        function handleSquareRoot() {
-            if (currentInput === '' || currentInput === '0' || currentInput === 'Error: Div by 0' || currentInput === 'Error: Invalid input') {
-                // If currentInput is '0' or error, sqrt(0) is 0. If error, clear it.
-                if (currentInput === 'Error: Div by 0' || currentInput === 'Error: Invalid input') {
-                    currentInput = '0';
-                }
-                updateDisplay();
-                return;
-            }
-            let num = parseFloat(currentInput);
-            if (num < 0) {
-                currentInput = 'Error: Invalid input';
-                shouldResetDisplay = true;
-            } else {
-                currentInput = roundResult(Math.sqrt(num)).toString();
-                shouldResetDisplay = true;
-            }
-            updateDisplay();
-        }
-
-        function handlePercentage() {
-            if (currentInput === '' || currentInput === '0' || currentInput === 'Error: Div by 0' || currentInput === 'Error: Invalid input') {
-                // If currentInput is '0' or error, 0% is 0. If error, clear it.
-                if (currentInput === 'Error: Div by 0' || currentInput === 'Error: Invalid input') {
-                    currentInput = '0';
-                }
-                updateDisplay();
-                return;
-            }
-            let num = parseFloat(currentInput);
-
-            if (previousInput !== '' && operator !== null) {
-                let prevNum = parseFloat(previousInput);
-                let percentageValue;
-
-                // For addition/subtraction, Y% means Y% of X (X is previousInput)
-                if (operator === '+' || operator === '-') {
-                    percentageValue = (num / 100) * prevNum;
-                } else { // For multiplication/division, Y% means Y/100
-                    percentageValue = num / 100;
-                }
-                currentInput = percentageValue.toString();
-                calculate(); // Perform the operation with the calculated percentage
-            } else {
-                // Simple percentage: 50% -> 0.5
-                currentInput = roundResult(num / 100).toString();
-                shouldResetDisplay = true;
-            }
-            updateDisplay();
-        }
-
-
-        // Event Listeners for buttons
-        numberButtons.forEach(button => {
-            button.addEventListener('click', () => {
-                appendNumber(button.dataset.number);
-            });
-        });
-
-        operatorButtons.forEach(button => {
-            button.addEventListener('click', () => {
-                const op = button.dataset.operator;
-                if (op === 'sqrt') {
-                    handleSquareRoot();
-                } else if (op === '%') {
-                    handlePercentage();
-                } else {
-                    chooseOperation(op);
-                }
-            });
-        });
-
-        equalsButton.addEventListener('click', () => {
-            calculate();
-        });
-
-        clearButton.addEventListener('click', () => {
-            clearCalculator();
-        });
-
-        deleteButton.addEventListener('click', () => {
-            deleteLastCharacter();
-        });
-
-        // Initialize display on load
         updateDisplay();
     </script>
 </body>
