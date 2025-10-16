@@ -105,28 +105,29 @@
     <div class="calculator">
         <div id="display">0</div>
         <div class="buttons-grid">
-            <button class="clear">C</button>
-            <button class="operation">/</button>
-            <button class="operation">*</button>
-            <button class="operation">-</button>
+            <button class="clear" data-action="clear">C</button>
+            <button class="operation" data-action="sqrt">√</button>
+            <button class="operation" data-action="percent">%</button>
+            <button class="operation" data-action="divide">/</button>
 
-            <button>7</button>
-            <button>8</button>
-            <button>9</button>
-            <button class="operation">+</button>
+            <button data-action="number">7</button>
+            <button data-action="number">8</button>
+            <button data-action="number">9</button>
+            <button class="operation" data-action="multiply">*</button>
 
-            <button>4</button>
-            <button>5</button>
-            <button>6</button>
-            <button class="equals">=</button>
+            <button data-action="number">4</button>
+            <button data-action="number">5</button>
+            <button data-action="number">6</button>
+            <button class="operation" data-action="subtract">-</button>
 
-            <button>1</button>
-            <button>2</button>
-            <button>3</button>
-            <button>.</button>
+            <button data-action="number">1</button>
+            <button data-action="number">2</button>
+            <button data-action="number">3</button>
+            <button class="operation" data-action="add">+</button>
 
-            <button class="zero">0</button>
-            <!-- The last column of the last row is intentionally left empty by this layout choice -->
+            <button class="zero" data-action="number">0</button>
+            <button data-action="decimal">.</button>
+            <button class="equals" data-action="equals">=</button>
         </div>
     </div>
 
@@ -166,7 +167,7 @@
         function chooseOperation(selectedOperation) {
             // If no number is entered yet, or only '0' and no previous operand, do nothing
             // Except allow changing the operation if one is already set and waiting for second operand
-            if (currentOperand === '0' && previousOperand === '') {
+            if (currentOperand === '0' && previousOperand === '' && !waitingForSecondOperand) {
                 return; // Cannot set operation on initial '0' without a previous number
             }
 
@@ -214,6 +215,48 @@
             waitingForSecondOperand = true; // After equals, next number starts a new calculation
         }
 
+        function applySqrt() {
+            const num = parseFloat(currentOperand);
+            if (isNaN(num)) return;
+            if (num < 0) {
+                display.innerText = 'Error: Negative √';
+                clear();
+                return;
+            }
+            currentOperand = Math.sqrt(num).toString();
+            waitingForSecondOperand = true; // After a unary operation, the next number should start a new input.
+        }
+
+        function applyPercent() {
+            let num = parseFloat(currentOperand);
+            if (isNaN(num)) return;
+
+            if (operation === undefined || previousOperand === '') {
+                // If no pending operation, X% means X / 100
+                currentOperand = (num / 100).toString();
+            } else {
+                // If there's a pending operation (e.g., 100 + 10%)
+                const prevNum = parseFloat(previousOperand);
+                if (isNaN(prevNum)) return;
+
+                switch (operation) {
+                    case '+':
+                    case '-':
+                        // Y + X% means Y + (Y * X / 100)
+                        // Y - X% means Y - (Y * X / 100)
+                        currentOperand = (prevNum * num / 100).toString();
+                        break;
+                    case '*':
+                    case '/':
+                        // Y * X% means Y * (X / 100)
+                        // Y / X% means Y / (X / 100)
+                        currentOperand = (num / 100).toString();
+                        break;
+                }
+            }
+            waitingForSecondOperand = true; // After a percentage, the next number should start a new input.
+        }
+
         function updateDisplay() {
             display.innerText = currentOperand;
         }
@@ -225,14 +268,19 @@
         buttons.forEach(button => {
             button.addEventListener('click', () => {
                 const buttonText = button.innerText;
+                const action = button.dataset.action;
 
-                if (button.classList.contains('clear')) {
+                if (action === 'clear') {
                     clear();
-                } else if (button.classList.contains('operation')) {
-                    chooseOperation(buttonText);
-                } else if (button.classList.contains('equals')) {
+                } else if (action === 'equals') {
                     compute();
-                } else { // Number or decimal button
+                } else if (action === 'sqrt') {
+                    applySqrt();
+                } else if (action === 'percent') {
+                    applyPercent();
+                } else if (action === 'add' || action === 'subtract' || action === 'multiply' || action === 'divide') {
+                    chooseOperation(buttonText);
+                } else if (action === 'number' || action === 'decimal') {
                     appendNumber(buttonText);
                 }
                 updateDisplay();
