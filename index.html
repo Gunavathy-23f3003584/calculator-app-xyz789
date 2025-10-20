@@ -4,197 +4,222 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Simple Calculator</title>
+    <!-- Bootstrap CSS CDN -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
     <style>
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             display: flex;
             justify-content: center;
             align-items: center;
             min-height: 100vh;
-            margin: 0;
             background-color: #f0f2f5;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
-
-        #calculator {
+        .calculator {
             background-color: #ffffff;
             border-radius: 15px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+            width: 320px; /* Fixed width for a compact calculator */
             padding: 20px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-            width: 320px;
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
+            text-align: center;
         }
-
-        #display {
-            width: calc(100% - 20px);
-            padding: 15px 10px;
-            font-size: 2.5em;
+        #calculator-display {
+            width: 100%;
+            height: 60px;
+            font-size: 2.2em;
             text-align: right;
+            margin-bottom: 20px;
+            padding: 10px 15px;
             border: none;
             border-radius: 10px;
             background-color: #e9ecef;
-            color: #343a40;
-            margin-bottom: 10px;
-            box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.05);
-            overflow: hidden;
-            white-space: nowrap;
-            text-overflow: clip;
+            color: #333;
+            box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.1);
+            pointer-events: none; /* Prevent input via keyboard */
+            overflow: hidden; /* Hide overflow text */
+            white-space: nowrap; /* Prevent text wrapping */
+            text-overflow: ellipsis; /* Add ellipsis for overflow */
         }
-
-        .buttons {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 10px;
-        }
-
-        .btn {
-            padding: 20px;
+        .calculator-buttons .btn {
+            width: 100%;
+            height: 60px;
             font-size: 1.5em;
-            border: none;
             border-radius: 10px;
-            cursor: pointer;
-            background-color: #f8f9fa;
-            color: #495057;
-            transition: background-color 0.2s, transform 0.1s;
-            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
-            user-select: none;
+            transition: all 0.2s ease-in-out;
+        }
+        /* Custom spacing for buttons using Bootstrap's gutter classes */
+        .calculator-buttons .col-3, .calculator-buttons .col-6 {
+            padding: 5px; /* Consistent padding around buttons */
         }
 
-        .btn:hover {
-            background-color: #e2e6ea;
-            transform: translateY(-1px);
+        .calculator-buttons .btn-secondary {
+            background-color: #6c757d;
+            border-color: #6c757d;
+            color: #fff;
         }
-
-        .btn:active {
-            transform: translateY(0);
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        .calculator-buttons .btn-secondary:hover {
+            background-color: #5a6268;
+            border-color: #545b62;
         }
-
-        .operator {
-            background-color: #ffc107;
-            color: #ffffff;
+        .calculator-buttons .btn-info { /* For operators */
+            background-color: #17a2b8;
+            border-color: #17a2b8;
+            color: #fff;
         }
-
-        .operator:hover {
-            background-color: #e0a800;
+        .calculator-buttons .btn-info:hover {
+            background-color: #138496;
+            border-color: #117a8b;
         }
-
-        .clear {
-            background-color: #dc3545;
-            color: #ffffff;
-        }
-
-        .clear:hover {
-            background-color: #c82333;
-        }
-
-        .equals {
+        .calculator-buttons .btn-success { /* For equals */
             background-color: #28a745;
-            color: #ffffff;
-            grid-row: span 2; /* Make equals button span 2 rows */
-            grid-column: 4 / 5; /* Place it in the 4th column */
+            border-color: #28a745;
+            color: #fff;
         }
-
-        .equals:hover {
+        .calculator-buttons .btn-success:hover {
             background-color: #218838;
+            border-color: #1e7e34;
         }
-
-        .zero {
-            grid-column: span 2; /* Make zero button span 2 columns */
+        .calculator-buttons .btn-danger { /* For clear */
+            background-color: #dc3545;
+            border-color: #dc3545;
+            color: #fff;
+        }
+        .calculator-buttons .btn-danger:hover {
+            background-color: #c82333;
+            border-color: #bd2130;
         }
     </style>
 </head>
 <body>
-    <div id="calculator">
-        <input type="text" id="display" value="0" readonly>
-        <div class="buttons">
-            <button class="btn clear">C</button>
-            <button class="btn operator" data-op="√">√</button>
-            <button class="btn operator" data-op="%">%</button>
-            <button class="btn operator">/</button>
+    <div class="calculator">
+        <input type="text" id="calculator-display" value="0" readonly>
+        <div class="calculator-buttons container-fluid">
+            <div class="row gx-2 gy-2"> <!-- Use Bootstrap's gutter classes for consistent spacing -->
+                <div class="col-6">
+                    <button type="button" class="btn btn-danger" id="clear-btn">C</button>
+                </div>
+                <div class="col-3">
+                    <button type="button" class="btn btn-info operator-btn" id="divide-btn">/</button>
+                </div>
+                <div class="col-3">
+                    <button type="button" class="btn btn-info operator-btn" id="multiply-btn">*</button>
+                </div>
 
-            <button class="btn number">7</button>
-            <button class="btn number">8</button>
-            <button class="btn number">9</button>
-            <button class="btn operator">*</button>
+                <div class="col-3">
+                    <button type="button" class="btn btn-secondary number-btn" id="seven-btn">7</button>
+                </div>
+                <div class="col-3">
+                    <button type="button" class="btn btn-secondary number-btn" id="eight-btn">8</button>
+                </div>
+                <div class="col-3">
+                    <button type="button" class="btn btn-secondary number-btn" id="nine-btn">9</button>
+                </div>
+                <div class="col-3">
+                    <button type="button" class="btn btn-info operator-btn" id="subtract-btn">-</button>
+                </div>
 
-            <button class="btn number">4</button>
-            <button class="btn number">5</button>
-            <button class="btn number">6</button>
-            <button class="btn operator">-</button>
+                <div class="col-3">
+                    <button type="button" class="btn btn-secondary number-btn" id="four-btn">4</button>
+                </div>
+                <div class="col-3">
+                    <button type="button" class="btn btn-secondary number-btn" id="five-btn">5</button>
+                </div>
+                <div class="col-3">
+                    <button type="button" class="btn btn-secondary number-btn" id="six-btn">6</button>
+                </div>
+                <div class="col-3">
+                    <button type="button" class="btn btn-info operator-btn" id="add-btn">+</button>
+                </div>
 
-            <button class="btn number">1</button>
-            <button class="btn number">2</button>
-            <button class="btn number">3</button>
-            <button class="btn equals">=</button>
-
-            <button class="btn number zero">0</button>
-            <button class="btn number decimal">.</button>
-            <button class="btn operator">+</button>
+                <div class="col-3">
+                    <button type="button" class="btn btn-secondary number-btn" id="one-btn">1</button>
+                </div>
+                <div class="col-3">
+                    <button type="button" class="btn btn-secondary number-btn" id="two-btn">2</button>
+                </div>
+                <div class="col-3">
+                    <button type="button" class="btn btn-secondary number-btn" id="three-btn">3</button>
+                </div>
+                <div class="col-3">
+                    <button type="button" class="btn btn-success" id="equals-btn">=</button>
+                </div>
+                
+                <div class="col-6">
+                    <button type="button" class="btn btn-secondary number-btn" id="zero-btn">0</button>
+                </div>
+                <div class="col-3">
+                    <button type="button" class="btn btn-secondary" id="decimal-btn">.</button>
+                </div>
+                <!-- The last col-3 is implicitly empty for visual balance -->
+            </div>
         </div>
     </div>
 
-    <script>
-        const display = document.getElementById('display');
-        const buttons = document.querySelector('.buttons');
+    <!-- Bootstrap JS CDN (optional, not strictly needed for this basic app but good practice) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
 
+    <script>
+        const display = document.getElementById('calculator-display');
         let currentInput = '0';
-        let operator = null;
         let previousInput = null;
-        let resetDisplay = false;
+        let operator = null;
+        let waitingForSecondOperand = false; // True after operator, next number is second operand
 
         function updateDisplay() {
-            // Limit display length to avoid overflow, e.g., 12 characters
-            const maxDisplayLength = 12;
-            if (currentInput.length > maxDisplayLength && currentInput !== 'Error') {
+            // Ensure display does not overflow aggressively, and handle 'Error'
+            if (currentInput === 'Error') {
+                display.value = currentInput;
+            } else if (currentInput.length > 12) { 
+                // Attempt to display large numbers using scientific notation or precision
                 const num = parseFloat(currentInput);
-                if (!isNaN(num)) {
-                    // Try to represent as scientific notation if it's a number
-                    if (Math.abs(num) >= 1e12 || Math.abs(num) < 1e-6 && num !== 0) {
-                        currentInput = num.toExponential(maxDisplayLength - 7); // e.g., "1.2345e+10"
-                    } else {
-                        currentInput = num.toPrecision(maxDisplayLength - (num < 0 ? 1 : 0)).replace(/\.0+$/, ''); // Clean up trailing zeros
-                    }
-                    // Ensure it doesn't exceed max length after precision adjustment
-                    if (currentInput.length > maxDisplayLength) {
-                        currentInput = parseFloat(currentInput).toExponential(5);
-                    }
+                if (isNaN(num)) {
+                    display.value = 'Error';
+                } else if (num.toString().length > 12) { // Check length of num.toString() to avoid re-overflowing
+                    display.value = num.toPrecision(8); // Use toPrecision for large numbers
+                } else {
+                    display.value = currentInput;
                 }
+            } else {
+                display.value = currentInput;
             }
-            display.value = currentInput;
         }
 
         function clearAll() {
             currentInput = '0';
-            operator = null;
             previousInput = null;
-            resetDisplay = false;
+            operator = null;
+            waitingForSecondOperand = false;
             updateDisplay();
         }
 
-        function appendNumber(number) {
-            if (currentInput === 'Error') {
+        function handleNumber(number) {
+            if (currentInput === 'Error') { // If error is displayed, clear and start new input
+                clearAll();
+            }
+            if (waitingForSecondOperand) {
                 currentInput = number;
-                resetDisplay = false;
-            } else if (resetDisplay) {
-                currentInput = number;
-                resetDisplay = false;
-            } else if (currentInput === '0') {
-                currentInput = number;
+                waitingForSecondOperand = false;
             } else {
-                currentInput += number;
+                // Prevent multiple leading zeros unless it's "0."
+                if (currentInput === '0' && number !== '0') {
+                    currentInput = number;
+                } else if (currentInput === '0' && number === '0') {
+                    // Do nothing, keep '0'
+                }
+                else {
+                    currentInput += number;
+                }
             }
             updateDisplay();
         }
 
-        function appendDecimal() {
+        function handleDecimal() {
             if (currentInput === 'Error') {
+                clearAll();
+            }
+            if (waitingForSecondOperand) {
                 currentInput = '0.';
-                resetDisplay = false;
-            } else if (resetDisplay) {
-                currentInput = '0.';
-                resetDisplay = false;
+                waitingForSecondOperand = false;
             } else if (!currentInput.includes('.')) {
                 currentInput += '.';
             }
@@ -202,137 +227,99 @@
         }
 
         function handleOperator(nextOperator) {
-            if (currentInput === 'Error') return;
+            if (currentInput === 'Error') {
+                return; // Do nothing if in error state
+            }
+            const inputValue = parseFloat(currentInput);
 
-            // Handle percentage as a special case
-            if (nextOperator === '%') {
-                const curr = parseFloat(currentInput);
-                if (isNaN(curr)) {
+            if (previousInput === null && !isNaN(inputValue)) {
+                previousInput = inputValue;
+            } else if (operator && !waitingForSecondOperand && !isNaN(inputValue)) {
+                const result = calculate(previousInput, operator, inputValue);
+                if (result === 'Error') {
                     currentInput = 'Error';
+                    previousInput = null;
+                    operator = null;
+                    waitingForSecondOperand = false;
                     updateDisplay();
                     return;
                 }
-
-                if (operator === null || previousInput === null) { // Unary percentage: 50% -> 0.5
-                    currentInput = (curr / 100).toString();
-                } else { // Binary percentage: e.g., 100 + 10%
-                    const prev = parseFloat(previousInput);
-                    if (isNaN(prev)) {
-                        currentInput = 'Error';
-                        updateDisplay();
-                        return;
-                    }
-                    let percentageValue;
-                    if (operator === '+' || operator === '-') {
-                        percentageValue = (prev * curr) / 100;
-                    } else if (operator === '*' || operator === '/') {
-                        percentageValue = curr / 100;
-                    } else { // Should not happen with current operators
-                        currentInput = 'Error';
-                        updateDisplay();
-                        return;
-                    }
-                    currentInput = percentageValue.toString(); // currentInput now holds the calculated percentage value
-                    // Now, effectively, the user has entered `previousInput` `operator` `percentageValue`.
-                    // We should then call `calculate()` immediately using the modified currentInput.
-                    calculate(); // This will use the modified currentInput
-                    // The calculate function will reset operator, previousInput, and resetDisplay.
-                    return; // Don't proceed to set `operator = nextOperator` for '%'
-                }
-                updateDisplay();
-                resetDisplay = true;
-                // Don't set operator or previousInput for unary %
-                return;
-            }
-
-            // Handle square root as a special case
-            if (nextOperator === '√') {
-                const value = parseFloat(currentInput);
-                if (isNaN(value) || value < 0) {
-                    currentInput = 'Error';
-                } else {
-                    currentInput = Math.sqrt(value).toString();
-                }
-                updateDisplay();
-                resetDisplay = true;
-                operator = null; // Unary ops don't set a pending binary operator
-                previousInput = null; // Unary ops clear pending state
-                return; // Don't proceed to set `operator = nextOperator` for '√'
-            }
-
-            // Existing binary operator logic
-            if (previousInput === null) {
-                previousInput = currentInput;
-            } else if (!resetDisplay) { // If a number was entered after the last operator, calculate
-                calculate();
-                if (currentInput === 'Error') return; // Stop if calculation resulted in error
-                previousInput = currentInput;
+                currentInput = String(result);
+                previousInput = result;
             }
             
+            waitingForSecondOperand = true;
             operator = nextOperator;
-            resetDisplay = true;
+            updateDisplay(); // Display intermediate result or current input
         }
 
-        function calculate() {
-            if (operator === null || previousInput === null || currentInput === 'Error') {
-                return;
+        function calculate(num1, op, num2) {
+            // Ensure num1 and num2 are numbers before parsing
+            num1 = parseFloat(num1);
+            num2 = parseFloat(num2);
+
+            if (isNaN(num1) || isNaN(num2)) {
+                return 'Error'; 
             }
 
-            const prev = parseFloat(previousInput);
-            const curr = parseFloat(currentInput);
             let result;
-
-            if (isNaN(prev) || isNaN(curr)) {
-                currentInput = 'Error';
-                updateDisplay();
-                return;
-            }
-
-            switch (operator) {
+            switch (op) {
                 case '+':
-                    result = prev + curr;
+                    result = num1 + num2;
                     break;
                 case '-':
-                    result = prev - curr;
+                    result = num1 - num2;
                     break;
                 case '*':
-                    result = prev * curr;
+                    result = num1 * num2;
                     break;
                 case '/':
-                    if (curr === 0) {
-                        currentInput = 'Error';
-                        updateDisplay();
-                        return;
+                    if (num2 === 0) {
+                        alert("Error: Division by zero!");
+                        return 'Error';
                     }
-                    result = prev / curr;
+                    result = num1 / num2;
                     break;
                 default:
-                    return;
+                    return num2; 
             }
-            currentInput = result.toString();
-            operator = null;
+            // Round to avoid floating point inaccuracies for basic operations
+            // e.g., 0.1 + 0.2 = 0.30000000000000004
+            return parseFloat(result.toFixed(10)); 
+        }
+
+        function handleEquals() {
+            if (currentInput === 'Error' || operator === null || waitingForSecondOperand) {
+                return; // Nothing to calculate or in error state or operator not set
+            }
+
+            const inputValue = parseFloat(currentInput);
+            const result = calculate(previousInput, operator, inputValue);
+
+            if (result === 'Error') {
+                currentInput = 'Error';
+            } else {
+                currentInput = String(result);
+            }
+            
             previousInput = null;
-            resetDisplay = true;
+            operator = null;
+            waitingForSecondOperand = true; // After equals, next number starts a new calculation
             updateDisplay();
         }
 
-        buttons.addEventListener('click', (event) => {
-            const target = event.target;
-            // Use data-op for √ and % if defined, else textContent
-            const op = target.dataset.op || target.textContent; 
-
-            if (target.classList.contains('number')) {
-                appendNumber(op);
-            } else if (target.classList.contains('operator')) {
-                handleOperator(op);
-            } else if (target.classList.contains('equals')) {
-                calculate();
-            } else if (target.classList.contains('clear')) {
-                clearAll();
-            } else if (target.classList.contains('decimal')) {
-                appendDecimal();
-            }
+        // Event Listeners
+        document.querySelectorAll('.number-btn').forEach(button => {
+            button.addEventListener('click', (event) => handleNumber(event.target.textContent));
         });
+
+        document.querySelectorAll('.operator-btn').forEach(button => {
+            button.addEventListener('click', (event) => handleOperator(event.target.textContent));
+        });
+
+        document.getElementById('decimal-btn').addEventListener('click', handleDecimal);
+        document.getElementById('clear-btn').addEventListener('click', clearAll);
+        document.getElementById('equals-btn').addEventListener('click', handleEquals);
 
         // Initialize display
         updateDisplay();
