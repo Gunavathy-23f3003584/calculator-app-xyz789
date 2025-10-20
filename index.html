@@ -110,18 +110,19 @@
         <input type="text" id="display" value="0" readonly>
         <div class="buttons">
             <button class="btn clear">C</button>
+            <button class="btn operator" data-op="√">√</button>
+            <button class="btn operator" data-op="%">%</button>
             <button class="btn operator">/</button>
-            <button class="btn operator">*</button>
-            <button class="btn operator">-</button>
 
             <button class="btn number">7</button>
             <button class="btn number">8</button>
             <button class="btn number">9</button>
-            <button class="btn operator">+</button>
+            <button class="btn operator">*</button>
 
             <button class="btn number">4</button>
             <button class="btn number">5</button>
             <button class="btn number">6</button>
+            <button class="btn operator">-</button>
 
             <button class="btn number">1</button>
             <button class="btn number">2</button>
@@ -130,6 +131,7 @@
 
             <button class="btn number zero">0</button>
             <button class="btn number decimal">.</button>
+            <button class="btn operator">+</button>
         </div>
     </div>
 
@@ -143,6 +145,23 @@
         let resetDisplay = false;
 
         function updateDisplay() {
+            // Limit display length to avoid overflow, e.g., 12 characters
+            const maxDisplayLength = 12;
+            if (currentInput.length > maxDisplayLength && currentInput !== 'Error') {
+                const num = parseFloat(currentInput);
+                if (!isNaN(num)) {
+                    // Try to represent as scientific notation if it's a number
+                    if (Math.abs(num) >= 1e12 || Math.abs(num) < 1e-6 && num !== 0) {
+                        currentInput = num.toExponential(maxDisplayLength - 7); // e.g., "1.2345e+10"
+                    } else {
+                        currentInput = num.toPrecision(maxDisplayLength - (num < 0 ? 1 : 0)).replace(/\.0+$/, ''); // Clean up trailing zeros
+                    }
+                    // Ensure it doesn't exceed max length after precision adjustment
+                    if (currentInput.length > maxDisplayLength) {
+                        currentInput = parseFloat(currentInput).toExponential(5);
+                    }
+                }
+            }
             display.value = currentInput;
         }
 
@@ -155,10 +174,13 @@
         }
 
         function appendNumber(number) {
-            if (resetDisplay) {
+            if (currentInput === 'Error') {
                 currentInput = number;
                 resetDisplay = false;
-            } else if (currentInput === '0' || currentInput === 'Error') {
+            } else if (resetDisplay) {
+                currentInput = number;
+                resetDisplay = false;
+            } else if (currentInput === '0') {
                 currentInput = number;
             } else {
                 currentInput += number;
@@ -167,7 +189,10 @@
         }
 
         function appendDecimal() {
-            if (resetDisplay) {
+            if (currentInput === 'Error') {
+                currentInput = '0.';
+                resetDisplay = false;
+            } else if (resetDisplay) {
                 currentInput = '0.';
                 resetDisplay = false;
             } else if (!currentInput.includes('.')) {
@@ -179,6 +204,63 @@
         function handleOperator(nextOperator) {
             if (currentInput === 'Error') return;
 
+            // Handle percentage as a special case
+            if (nextOperator === '%') {
+                const curr = parseFloat(currentInput);
+                if (isNaN(curr)) {
+                    currentInput = 'Error';
+                    updateDisplay();
+                    return;
+                }
+
+                if (operator === null || previousInput === null) { // Unary percentage: 50% -> 0.5
+                    currentInput = (curr / 100).toString();
+                } else { // Binary percentage: e.g., 100 + 10%
+                    const prev = parseFloat(previousInput);
+                    if (isNaN(prev)) {
+                        currentInput = 'Error';
+                        updateDisplay();
+                        return;
+                    }
+                    let percentageValue;
+                    if (operator === '+' || operator === '-') {
+                        percentageValue = (prev * curr) / 100;
+                    } else if (operator === '*' || operator === '/') {
+                        percentageValue = curr / 100;
+                    } else { // Should not happen with current operators
+                        currentInput = 'Error';
+                        updateDisplay();
+                        return;
+                    }
+                    currentInput = percentageValue.toString(); // currentInput now holds the calculated percentage value
+                    // Now, effectively, the user has entered `previousInput` `operator` `percentageValue`.
+                    // We should then call `calculate()` immediately using the modified currentInput.
+                    calculate(); // This will use the modified currentInput
+                    // The calculate function will reset operator, previousInput, and resetDisplay.
+                    return; // Don't proceed to set `operator = nextOperator` for '%'
+                }
+                updateDisplay();
+                resetDisplay = true;
+                // Don't set operator or previousInput for unary %
+                return;
+            }
+
+            // Handle square root as a special case
+            if (nextOperator === '√') {
+                const value = parseFloat(currentInput);
+                if (isNaN(value) || value < 0) {
+                    currentInput = 'Error';
+                } else {
+                    currentInput = Math.sqrt(value).toString();
+                }
+                updateDisplay();
+                resetDisplay = true;
+                operator = null; // Unary ops don't set a pending binary operator
+                previousInput = null; // Unary ops clear pending state
+                return; // Don't proceed to set `operator = nextOperator` for '√'
+            }
+
+            // Existing binary operator logic
             if (previousInput === null) {
                 previousInput = currentInput;
             } else if (!resetDisplay) { // If a number was entered after the last operator, calculate
@@ -236,11 +318,13 @@
 
         buttons.addEventListener('click', (event) => {
             const target = event.target;
+            // Use data-op for √ and % if defined, else textContent
+            const op = target.dataset.op || target.textContent; 
 
             if (target.classList.contains('number')) {
-                appendNumber(target.textContent);
+                appendNumber(op);
             } else if (target.classList.contains('operator')) {
-                handleOperator(target.textContent);
+                handleOperator(op);
             } else if (target.classList.contains('equals')) {
                 calculate();
             } else if (target.classList.contains('clear')) {
