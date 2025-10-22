@@ -83,18 +83,18 @@
             background-color: #3f9bff;
         }
 
-        .button.clear-all {
+        /* New class for the 'C' (Clear) button */
+        .button.clear-button {
             background-color: #d11a2a;
         }
 
-        .button.clear-all:hover {
+        .button.clear-button:hover {
             background-color: #e63a4a;
         }
 
         /* Specific button spans */
-        .button.clear-all {
-            grid-column: span 4;
-        }
+        /* The original .button.clear-all class and its span was removed,
+           as 'C' now occupies a single grid column. */
         .button.zero {
             grid-column: span 2;
         }
@@ -104,27 +104,34 @@
     <div class="calculator">
         <input type="text" id="display" readonly value="0">
         <div class="buttons">
-            <button class="button clear-all" id="clear">C</button>
+            <!-- First Row: Clear, Square Root, Percentage, Divide -->
+            <button class="button clear-button" id="clear">C</button>
+            <button class="button operator" data-value="sqrt">√</button>
+            <button class="button operator" data-value="%">%</button>
+            <button class="button operator" data-value="/">/</button>
 
+            <!-- Second Row: 7, 8, 9, Multiply -->
             <button class="button" data-value="7">7</button>
             <button class="button" data-value="8">8</button>
             <button class="button" data-value="9">9</button>
-            <button class="button operator" data-value="/">/</button>
+            <button class="button operator" data-value="*">*</button>
 
+            <!-- Third Row: 4, 5, 6, Subtract -->
             <button class="button" data-value="4">4</button>
             <button class="button" data-value="5">5</button>
             <button class="button" data-value="6">6</button>
-            <button class="button operator" data-value="*">*</button>
+            <button class="button operator" data-value="-">-</button>
 
+            <!-- Fourth Row: 1, 2, 3, Add -->
             <button class="button" data-value="1">1</button>
             <button class="button" data-value="2">2</button>
             <button class="button" data-value="3">3</button>
-            <button class="button operator" data-value="-">-</button>
+            <button class="button operator" data-value="+">+</button>
 
+            <!-- Fifth Row: 0 (double-width), Decimal, Equals -->
             <button class="button zero" data-value="0">0</button>
             <button class="button" data-value=".">.</button>
             <button class="button equals" id="equals">=</button>
-            <button class="button operator" data-value="+">+</button>
         </div>
     </div>
 
@@ -145,7 +152,7 @@
         }
 
         function appendNumber(number) {
-            if (currentInput === 'Error: Div by zero') {
+            if (currentInput.includes('Error')) { // Check for any error state
                 currentInput = '0'; // Reset display after an error
             }
 
@@ -165,7 +172,7 @@
         }
 
         function chooseOperation(op) {
-            if (currentInput === 'Error: Div by zero') {
+            if (currentInput.includes('Error')) { // Check for any error state
                 clearDisplay(); // Clear error state if an operation is chosen
                 return;
             }
@@ -185,6 +192,18 @@
             if (isNaN(prev) || isNaN(current)) {
                 // If either operand is not a number, don't calculate
                 // This handles cases like pressing '=' without enough input
+                // or if an error state is present and '=' is pressed
+                if (currentInput.includes('Error')) {
+                    return; // Do nothing if already in an error state
+                }
+                // If previousInput is empty but currentInput has a number (e.g., just typed a number and pressed =),
+                // it acts as entering that number.
+                if (previousInput === '' && !isNaN(current)) {
+                    // Do nothing, currentInput is already the result
+                    return;
+                }
+                currentInput = 'Error'; // Generic error for invalid input
+                updateDisplay();
                 return;
             }
 
@@ -210,12 +229,67 @@
                     result = prev / current;
                     break;
                 default:
-                    return; // No operation selected
+                    return; // No operation selected or already calculated
             }
             currentInput = result.toString();
             operation = null; // Reset operation after calculation
             previousInput = ''; // Clear previous input
             shouldResetDisplay = true; // Next number entry should clear the display
+            updateDisplay();
+        }
+
+        function performSqrt() {
+            if (currentInput.includes('Error')) { // Check for any error state
+                clearDisplay();
+                return;
+            }
+            const num = parseFloat(currentInput);
+            if (isNaN(num)) {
+                currentInput = 'Error';
+            } else if (num < 0) {
+                currentInput = 'Error: Neg sqrt';
+            } else {
+                currentInput = Math.sqrt(num).toString();
+            }
+            shouldResetDisplay = true; // After sqrt, next number should clear display
+            updateDisplay();
+        }
+
+        function performPercentage() {
+            if (currentInput.includes('Error')) { // Check for any error state
+                clearDisplay();
+                return;
+            }
+            let num = parseFloat(currentInput);
+            if (isNaN(num)) {
+                currentInput = 'Error';
+                updateDisplay();
+                return;
+            }
+
+            if (previousInput !== '' && operation !== null) {
+                const prev = parseFloat(previousInput);
+                if (isNaN(prev)) {
+                    currentInput = 'Error';
+                    updateDisplay();
+                    return;
+                }
+                if (operation === '+' || operation === '-') {
+                    // e.g., 100 + 10% -> 100 + (100 * 0.1)
+                    // The percentage value is calculated based on previousInput, then this new value becomes currentInput
+                    // which will be added/subtracted to previousInput during calculate().
+                    currentInput = (prev * (num / 100)).toString();
+                } else {
+                    // e.g., 100 * 10% -> 100 * 0.1
+                    // e.g., 100 / 10% -> 100 / 0.1
+                    // The currentInput itself becomes the percentage (e.g., 0.1 for 10%)
+                    currentInput = (num / 100).toString();
+                }
+            } else {
+                // e.g., 50% -> 0.5
+                currentInput = (num / 100).toString();
+            }
+            shouldResetDisplay = true; // After percentage, next number should clear display
             updateDisplay();
         }
 
@@ -233,6 +307,10 @@
                 button.addEventListener('click', clearDisplay);
             } else if (button.id === 'equals') {
                 button.addEventListener('click', calculate);
+            } else if (button.dataset.value === 'sqrt') {
+                button.addEventListener('click', performSqrt);
+            } else if (button.dataset.value === '%') {
+                button.addEventListener('click', performPercentage);
             } else if (button.classList.contains('operator')) {
                 button.addEventListener('click', () => chooseOperation(button.dataset.value));
             } else { // Number and decimal buttons
